@@ -34,6 +34,7 @@ class CFlagManagerV4l : public CFlagManager
     std::string m_device;
     const char* m_standard;
     int         m_channel;
+    int         m_framerate;
     bool        m_checksignal;
 
     int         m_width;

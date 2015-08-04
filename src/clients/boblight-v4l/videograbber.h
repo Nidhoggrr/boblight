@@ -39,6 +39,7 @@
 extern "C"
 {
 #include <libavcodec/avcodec.h>
+#include <libavutil/pixdesc.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libavdevice/avdevice.h>
@@ -59,7 +60,7 @@ class CVideoGrabber
     std::string GetError() { return m_error; }
     
   private:
-    AVFormatParameters m_formatparams;
+    AVDictionary* m_formatparams;
     AVFormatContext*   m_formatcontext;
     int                m_videostream;
 

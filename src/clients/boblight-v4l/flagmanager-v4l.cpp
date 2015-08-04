@@ -26,8 +26,8 @@ using namespace std;
 
 CFlagManagerV4l::CFlagManagerV4l()
 {
-  //c = device, w == widthxheight, v = video standard, i = input, d = debug mode, e = codec
-  m_flags += "c:w:v:i:d::ne:";
+  //c = device, w == widthxheight, v = video standard, f = framerate 1/f , i = input, d = debug mode, e = codec
+  m_flags += "c:w:v:b:i:d::ne:";
 
   //default device
   m_device = "/dev/video0";
@@ -41,6 +41,9 @@ CFlagManagerV4l::CFlagManagerV4l()
 
   //channel of -1 means ffmpeg doesn't change it
   m_channel = -1;
+
+  //default framerate
+  m_framerate = NULL;
 
   //emptpy standard meands ffmpeg doesn't change it
   m_standard = NULL;
@@ -57,6 +60,13 @@ void CFlagManagerV4l::ParseFlagsExtended(int& argc, char**& argv, int& c, char*&
   {
     m_device = optarg;
   }
+   else if (c == 'b')
+   {
+     if (!StrToInt(string(optarg), m_framerate))
+     {
+       throw string("Wrong value " + string(optarg) + " for framerate");
+     }
+   }
   else if (c == 'w')
   {
     if (sscanf(optarg, "%ix%i", &m_width, &m_height) != 2 || m_width < 1 || m_height < 1)
@@ -106,6 +116,7 @@ void CFlagManagerV4l::PrintHelpMessage()
   cout << "  -o  add libboblight option, syntax: [light:]option=value\n";
   cout << "  -l  list libboblight options\n";
   cout << "  -f  fork\n";
+  cout << "  -b  set framerate to 1/f, example: -b 25 --> 1/25\n";
   cout << "  -c  set the device to use, default is /dev/video0\n";
   cout << "  -w  widthxheight of the captured image, example: -w 400x300\n";
   cout << "  -v  video standard\n";
