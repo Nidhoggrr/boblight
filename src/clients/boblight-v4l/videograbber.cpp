@@ -78,7 +78,7 @@ void CVideoGrabber::Setup()
 	snprintf(buf, sizeof(buf), "%dx%d", g_flagmanager.m_width, g_flagmanager.m_height);
 	av_dict_set(&m_formatparams, "video_size", buf, 0);
     av_dict_set(&m_formatparams, "standard", g_flagmanager.m_standard, 0);
-    av_dict_set(&m_formatparams, "pixel_format", av_get_pix_fmt_name(PIX_FMT_BGR24), 0);
+    av_dict_set(&m_formatparams, "pixel_format", av_get_pix_fmt_name(AV_PIX_FMT_BGR24), 0);
 
   //open with custom codec when requested
   if (!g_flagmanager.m_customcodec.empty())
@@ -146,28 +146,28 @@ void CVideoGrabber::Setup()
 
   //check if we need to scale with libswscale
   m_needsscale =
-    m_codeccontext->pix_fmt != PIX_FMT_BGR24 ||
+    m_codeccontext->pix_fmt != AV_PIX_FMT_BGR24 ||
     m_codeccontext->width   != g_flagmanager.m_width ||
     m_codeccontext->height  != g_flagmanager.m_height;
 
   //set up the frame that libavdecide will read the video4linux(2) data into
-  m_inputframe = avcodec_alloc_frame();
+  m_inputframe = av_frame_alloc();
   
   if (m_needsscale)
   {
     //set up the frame libswscale will write to
-    m_outputframe = avcodec_alloc_frame();
+    m_outputframe = av_frame_alloc();
 
     m_sws = sws_getContext(m_codeccontext->width, m_codeccontext->height, m_codeccontext->pix_fmt, 
-                           g_flagmanager.m_width, g_flagmanager.m_height, PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                           g_flagmanager.m_width, g_flagmanager.m_height, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
     if (!m_sws)
       throw string("Unable to get sws context");
 
-    int buffsize = avpicture_get_size(PIX_FMT_RGB24, g_flagmanager.m_width, g_flagmanager.m_height);
+    int buffsize = avpicture_get_size(AV_PIX_FMT_RGB24, g_flagmanager.m_width, g_flagmanager.m_height);
     m_framebuffer = (uint8_t*)av_malloc(buffsize);
 
-    avpicture_fill((AVPicture *)m_outputframe, m_framebuffer, PIX_FMT_BGR24, g_flagmanager.m_width, g_flagmanager.m_height);
+    avpicture_fill((AVPicture *)m_outputframe, m_framebuffer, AV_PIX_FMT_BGR24, g_flagmanager.m_width, g_flagmanager.m_height);
   }
 
   //open video device for signal checking
@@ -215,13 +215,13 @@ void CVideoGrabber::Run(volatile bool& stop, void* boblight)
   {
     if (stop)
     {
-      av_free_packet(&pkt);
+      av_packet_unref(&pkt);
       break;
     }
     
     if (!CheckSignal())
     {
-      av_free_packet(&pkt);
+      av_packet_unref(&pkt);
       if (priority != 255)
       {
         priority = 255;
@@ -279,13 +279,13 @@ void CVideoGrabber::Run(volatile bool& stop, void* boblight)
         if (!boblight_sendrgb(boblight, g_flagmanager.m_sync, NULL))
         {
           m_error = boblight_geterror(boblight);
-          av_free_packet(&pkt);
+          av_packet_unref(&pkt);
           return; //recoverable error
         }
       }
     }
 
-    av_free_packet(&pkt);
+    av_packet_unref(&pkt);
   }
 }
 
